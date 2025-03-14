@@ -1,7 +1,28 @@
 import { useState } from "react";
 
 export default function SimpleList(props){
-    const [names, setNames] = useState(props.names);
+
+    const alphabeticalComparator = (a, b) => {
+        if(a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+        if(a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+        return 0;
+    }
+
+    const couteralphabeticalComparator = (a, b) => {
+        if(a.name.toLowerCase() < b.name.toLowerCase()) return 1;
+        if(a.name.toLowerCase() > b.name.toLowerCase()) return -1;
+        return 0;
+    }
+
+    const idComparator = (a, b) => {
+        if(a.id < b.id) return -1;
+        if(a.id > b.id) return 1;
+        return 0;
+    }
+
+    const [currentComparator, setCurrentComparator] = useState(idComparator);
+
+    const [names, setNames] = useState(props.names || []);
 
     const [inputNameValue, setInputNameValue] = useState("");
 
@@ -9,11 +30,15 @@ export default function SimpleList(props){
         return Math.max(...names.map((name) => name.id)) + 1;
     }
 
-    const handleSubmit = (event) => {
+    const handleInputNameSubmit = (event) => {
         event.preventDefault();
+        if (inputNameValue.trim() === "") {
+            return;
+        }
+
         setNames((prevNames) => [
             ...prevNames,
-            { id: getNewId(), name: inputNameValue },
+            { id: getNewId(), name: inputNameValue || "brak imienia" },
         ]);
 
         setInputNameValue("");
@@ -30,15 +55,32 @@ export default function SimpleList(props){
 
     return (
         <>
-        <ul>
-            {names.map((item) => (
-                <li key={item.id}>
-                    {item.name}
-                    <button value={item.id} onClick={() => handleDelete(item.id)}>Usuń</button>
+        <form>
+            <ul>
+                <li>
+                Sortuj według
                 </li>
-            ))}
-        </ul>
-        <form onSubmit={handleSubmit}>
+                <li>
+                    <label onClick={setCurrentComparator(idComparator)}>
+                        <input type="radio" name="sortOrder" value="byId"/>
+                        id
+                    </label>
+                </li>
+                <li>
+                    <label onClick={setCurrentComparator(alphabeticalComparator)}>
+                    <input type="radio" name="sortOrder" value="byNameAlphabetically"/>
+                        imienia A-Z
+                    </label>
+                </li>
+                <li>
+                    <label onClick={setCurrentComparator(couteralphabeticalComparator)}>
+                    <input type="radio" name="sortOrder" value="byNameCounteralphabetically"/>
+                        imienia Z-A
+                    </label>
+                </li>
+            </ul>
+        </form>
+        <form onSubmit={handleInputNameSubmit}>
             <input
                 type="text"
                 value={inputNameValue}
@@ -46,6 +88,14 @@ export default function SimpleList(props){
             />
             <input type="submit" value="Dodaj"/>
         </form>
+        <ul>
+            {names.slice().sort((a, b) => currentComparator(a, b)).map((item) => (
+                <li key={item.id}>
+                    {item.name}
+                    <button value={item.id} onClick={() => handleDelete(item.id)}>Usuń</button>
+                </li>
+            ))}
+        </ul>
         </>
     );
 }
